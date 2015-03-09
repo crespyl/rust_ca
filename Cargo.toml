@@ -1,11 +1,11 @@
 [package]
-name = "ca-1d"
+name = "ca.rs"
 version = "0.0.1"
 authors = ["Peter Jacobs <peter@crespyl.net>"]
 
 [[bin]]
 name = "ca"
-path = "src/main.rs"
+path = "src/ca.rs"
 
 [dependencies]
 rand = "*"

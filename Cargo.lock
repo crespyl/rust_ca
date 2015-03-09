@@ -1,5 +1,5 @@
 [root]
-name = "ca-1d"
+name = "ca.rs"
 version = "0.0.1"
 dependencies = [
  "bitflags 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
