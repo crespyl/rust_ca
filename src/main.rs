@@ -67,8 +67,10 @@ fn format_bitvec(bv: &BitVec, dead: char, live: char) -> String {
 
 // Docopt usage string
 docopt!(Args derive Debug, "
-Simulate an elementary one-dimensional cellular automaton.
+ca: Simulate an elementary one-dimensional cellular automaton.
+
 Usage: ca [options]
+Try 'ca --help' for more information.
 
 Options:
     -r, --rule=RULE     Use the given rule [default: 90].
@@ -96,6 +98,7 @@ Options:
 fn main() {
     let args: Args = Args::docopt()
         .version(Some(env!("CARGO_PKG_VERSION").to_string()))
+        .help(true)
         .decode().unwrap_or_else(|e| e.exit());
 
     // set up the world and rules
