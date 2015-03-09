@@ -71,8 +71,7 @@ Simulate an elementary one-dimensional cellular automaton.
 Usage: ca [options]
 
 Options:
-    -h, --help          Show this message.
-    -r, --rule=RULE     Use the given rule [default 90].
+    -r, --rule=RULE     Use the given rule [default: 90].
     -c, --cells=CELLS   Simulate the given number of cells [default: 80].
     -n, --steps=STEPS   Run the simulation for a given number of generations [default: 24].
     -d, --dead=CHAR     Use the given character to display \"dead\" cells [default: .].
@@ -82,6 +81,9 @@ Options:
                         d and l options.  Can be RANDOM to enable the --random flag.
     --random=PERCENT    Used with the --start flag; initialize the world randomly, giving
                         each cell a PERCENT chance to start live.  [default: 0.5].
+
+    -h, --help          Show this message.
+    --version           Show the version number.
 ",
         flag_rule: u8,
         flag_cells: usize,
@@ -92,7 +94,9 @@ Options:
 );
 
 fn main() {
-    let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
+    let args: Args = Args::docopt()
+        .version(Some(env!("CARGO_PKG_VERSION").to_string()))
+        .decode().unwrap_or_else(|e| e.exit());
 
     // set up the world and rules
     let rule = args.flag_rule;
