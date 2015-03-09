@@ -1,0 +1,16 @@
+[package]
+name = "ca-1d"
+version = "0.0.1"
+authors = ["Peter Jacobs <peter@crespyl.net>"]
+
+[[bin]]
+name = "ca"
+path = "src/main.rs"
+
+[dependencies]
+rand = "*"
+bitflags = "*"
+rustc-serialize = "*"
+
+docopt = "*"
+docopt_macros = "*"
