@@ -3,12 +3,10 @@
 extern crate core;
 extern crate docopt;
 extern crate rand;
+extern crate "rustc-serialize" as rustc_serialize;
 
 #[macro_use]
 extern crate bitflags;
-
-extern crate "rustc-serialize" as rustc_serialize;
-
 
 use std::mem;
 use std::collections::BitVec;
@@ -17,55 +15,7 @@ use core::iter::FromIterator;
 use docopt::Docopt;
 use rand::random;
 
-const RULE_TTT: u8  = 0b10000000;
-const RULE_TTF: u8  = 0b01000000;
-const RULE_TFT: u8  = 0b00100000;
-const RULE_TFF: u8  = 0b00010000;
-const RULE_FTT: u8  = 0b00001000;
-const RULE_FTF: u8  = 0b00000100;
-const RULE_FFT: u8  = 0b00000010;
-const RULE_FFF: u8  = 0b00000001;
 
-/// Takes a number representing three cells and returns whether, according
-/// to this rule, the center cell should become live or dead at the next
-/// generation.
-fn evolve(rule: u8, state: u8) -> bool {
-    let state = state & 7;  // we're only interested in the last 3 bits
-    match state {
-        7 => rule & RULE_TTT > 0,
-        6 => rule & RULE_TTF > 0,
-        5 => rule & RULE_TFT > 0,
-        4 => rule & RULE_TFF > 0,
-        3 => rule & RULE_FTT > 0,
-        2 => rule & RULE_FTF > 0,
-        1 => rule & RULE_FFT > 0,
-        0 => rule & RULE_FFF > 0,
-        _ => { panic!("if this happens, bitwise math is broken!?") }
-    }
-}
-
-/// Get the three bits representing a single cell and its neighbors
-/// If wrap is true, the first and last cells are considered neighbors, otherwise
-/// any neighbors "out of bounds" are always considered to be dead.
-fn cell_neighbors(cell_idx: usize, world: &BitVec, wrap: bool) -> u8 {
-    if let Some(cell) = world.get(cell_idx) {
-        let right = world.get(cell_idx.overflowing_add(1).0)
-            .or_else(|| if wrap { Some(world[0]) } else { Some(false) }).unwrap();
-        let left = world.get(cell_idx.overflowing_sub(1).0)
-            .or_else(|| if wrap { Some(world[world.len()-1]) } else { Some(false) }).unwrap();
-        
-        (left as u8) << 2 | (cell as u8) << 1 | (right as u8)
-    } else {
-        0
-    }
-}
-
-/// Simple function to print out a BitVec as '.' and '#' characters
-fn format_bitvec(bv: &BitVec, dead: char, live: char) -> String {
-    String::from_iter(bv.iter().map(|b| if b { live } else { dead }))
-}
-
-// Docopt usage string
 docopt!(Args derive Debug, "
 ca: Simulate an elementary one-dimensional cellular automaton.
 
@@ -142,5 +92,36 @@ fn main() {
         }
         mem::swap(world, next);
     }
-    
+}
+
+/// Takes a number representing three cells and returns whether, according
+/// to this rule, the center cell should become live or dead at the next
+/// generation.
+fn evolve(rule: u8, state: u8) -> bool {
+    let state = state & 7;  // we're only interested in the last 3 bits
+
+    // state will be a number in the range 0b000 (0) to 0b111 (7) , we
+    // want to pick the corresponding bit from the rule
+    (rule & 1 << state) > 0
+}
+
+/// Get the three bits representing a single cell and its neighbors
+/// If wrap is true, the first and last cells are considered neighbors, otherwise
+/// any neighbors "out of bounds" are always considered to be dead.
+fn cell_neighbors(cell_idx: usize, world: &BitVec, wrap: bool) -> u8 {
+    if let Some(cell) = world.get(cell_idx) {
+        let right = world.get(cell_idx.overflowing_add(1).0)
+            .or_else(|| if wrap { Some(world[0]) } else { Some(false) }).unwrap();
+        let left = world.get(cell_idx.overflowing_sub(1).0)
+            .or_else(|| if wrap { Some(world[world.len()-1]) } else { Some(false) }).unwrap();
+        
+        (left as u8) << 2 | (cell as u8) << 1 | (right as u8)
+    } else {
+        0
+    }
+}
+
+/// Simple function to print out a BitVec as '.' and '#' characters
+fn format_bitvec(bv: &BitVec, dead: char, live: char) -> String {
+    String::from_iter(bv.iter().map(|b| if b { live } else { dead }))
 }
