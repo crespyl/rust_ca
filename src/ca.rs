@@ -1,22 +1,16 @@
-#![feature(core, collections, plugin)]
-#![plugin(docopt_macros)]
-extern crate core;
-extern crate docopt;
-extern crate rand;
-extern crate "rustc-serialize" as rustc_serialize;
-
 #[macro_use]
-extern crate bitflags;
+extern crate serde_derive;
 
-use std::mem;
-use std::collections::BitVec;
-use core::num::wrapping::OverflowingOps;
-use core::iter::FromIterator;
+extern crate docopt;
 use docopt::Docopt;
+
+extern crate rand;
 use rand::random;
 
+extern crate bit_vec;
+use bit_vec::BitVec;
 
-docopt!(Args derive Debug, "
+const USAGE: &'static str = "
 ca: Simulate an elementary one-dimensional cellular automaton.
 
 Usage: ca [options]
@@ -36,20 +30,25 @@ Options:
 
     -h, --help          Show this message.
     --version           Show the version number.
-",
-        flag_rule: u8,
-        flag_cells: usize,
-        flag_steps: usize,
-        flag_dead: char,
-        flag_live: char,
-        flag_random: f32
-);
+";
+
+#[derive(Debug, Deserialize)]
+struct Args {
+    flag_rule: u8,
+    flag_cells: usize,
+    flag_start: String,
+    flag_steps: usize,
+    flag_dead: char,
+    flag_live: char,
+    flag_random: f32
+}
 
 fn main() {
-    let args: Args = Args::docopt()
-        .version(Some(env!("CARGO_PKG_VERSION").to_string()))
-        .help(true)
-        .decode().unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.version(Some(env!("CARGO_PKG_VERSION").to_string()))
+                  .help(true)
+                  .deserialize())
+        .unwrap_or_else(|e| e.exit());
 
     // set up the world and rules
     let rule = args.flag_rule;
@@ -61,8 +60,8 @@ fn main() {
     let generations = args.flag_steps;
     println!("simulating {} cells for {} generations", cells, generations);
 
-    let mut world = &mut BitVec::from_elem(cells, false);
-    let mut next = &mut BitVec::from_elem(cells, false);
+    let world = &mut BitVec::from_elem(cells, false);
+    let next = &mut BitVec::from_elem(cells, false);
 
     // parse the start flag,
     // empty string means we default to 1 live cell in the center,
@@ -90,7 +89,7 @@ fn main() {
             let state = cell_neighbors(i, &world, false);
             next.set(i, evolve(rule, state));
         }
-        mem::swap(world, next);
+        std::mem::swap(world, next);
     }
 }
 
@@ -114,7 +113,7 @@ fn cell_neighbors(cell_idx: usize, world: &BitVec, wrap: bool) -> u8 {
             .or_else(|| if wrap { Some(world[0]) } else { Some(false) }).unwrap();
         let left = world.get(cell_idx.overflowing_sub(1).0)
             .or_else(|| if wrap { Some(world[world.len()-1]) } else { Some(false) }).unwrap();
-        
+
         (left as u8) << 2 | (cell as u8) << 1 | (right as u8)
     } else {
         0
@@ -123,5 +122,5 @@ fn cell_neighbors(cell_idx: usize, world: &BitVec, wrap: bool) -> u8 {
 
 /// Simple function to print out a BitVec as '.' and '#' characters
 fn format_bitvec(bv: &BitVec, dead: char, live: char) -> String {
-    String::from_iter(bv.iter().map(|b| if b { live } else { dead }))
+    bv.iter().map(|b| if b { live } else { dead }).collect::<String>()
 }
