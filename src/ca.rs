@@ -97,6 +97,7 @@ Options:
                         each cell a PERCENT chance to start live.  [default: 0.5].
     -w, --wrap          If present, causes the world to that the first and last cells are
                         neighbors.
+    --skip-to-end       Only output the state of the last generation
 
     -h, --help          Show this message.
     --version           Show the version number.
@@ -112,6 +113,7 @@ struct Args {
     flag_dead: char,
     flag_live: char,
     flag_random: f32,
+    flag_skip_to_end: bool,
 }
 
 fn main() {
@@ -159,11 +161,24 @@ fn main() {
     // keep and reuse a String buffer for the formatted version of the world
     let mut buffer = String::new();
 
+    if !args.flag_skip_to_end {
+        format_world(&mut buffer, &world, args.flag_dead, args.flag_live);
+        println!("{}", buffer);
+    }
+
     // run the simulation
     for _ in 0..args.flag_steps {
         world.step();
+
+        if !args.flag_skip_to_end {
+            format_world(&mut buffer, &world, args.flag_dead, args.flag_live);
+            println!("{}", buffer);
+        }
+    }
+
+    if args.flag_skip_to_end {
         format_world(&mut buffer, &world, args.flag_dead, args.flag_live);
-        println!("{}", buffer);
+        println!("final state:\n{}", buffer);
     }
 }
 
