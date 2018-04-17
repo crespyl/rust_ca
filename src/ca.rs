@@ -99,6 +99,8 @@ Options:
                         each cell a PERCENT chance to start live.  [default: 0.5].
     -w, --wrap          If present, causes the world to that the first and last cells are
                         neighbors.
+    --history           Track the world history (may use a lot of memory) and stop after
+                        the first repated pattern
     --skip-to-end       Only output the state of the last generation
 
     -h, --help          Show this message.
@@ -116,6 +118,7 @@ struct Args {
     flag_live: char,
     flag_random: f32,
     flag_skip_to_end: bool,
+    flag_history: bool,
 }
 
 fn main() {
@@ -169,8 +172,11 @@ fn main() {
     }
 
     // keep track of visited states
-    let mut history = HashSet::with_capacity(args.flag_steps);
-    history.insert(world.get_state().clone());
+    let mut history = HashSet::new();
+    if args.flag_history {
+        history.reserve(args.flag_steps);
+        history.insert(world.get_state().clone());
+    }
 
     // run the simulation
     for i in 0..args.flag_steps {
@@ -181,11 +187,13 @@ fn main() {
             println!("{}", buffer);
         }
 
-        if history.contains(world.get_state()) {
-            println!("found duplicate state after {} generations\n", i);
-            break;
-        } else {
-            history.insert(world.get_state().clone());
+        if args.flag_history {
+            if history.contains(world.get_state()) {
+                println!("found duplicate state after {} generations\n", i);
+                break;
+            } else {
+                history.insert(world.get_state().clone());
+            }
         }
     }
 
