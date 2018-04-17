@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate serde_derive;
 
+use std::collections::HashSet;
+
 extern crate docopt;
 use docopt::Docopt;
 
@@ -166,13 +168,24 @@ fn main() {
         println!("{}", buffer);
     }
 
+    // keep track of visited states
+    let mut history = HashSet::with_capacity(args.flag_steps);
+    history.insert(world.get_state().clone());
+
     // run the simulation
-    for _ in 0..args.flag_steps {
+    for i in 0..args.flag_steps {
         world.step();
 
         if !args.flag_skip_to_end {
             format_world(&mut buffer, &world, args.flag_dead, args.flag_live);
             println!("{}", buffer);
+        }
+
+        if history.contains(world.get_state()) {
+            println!("found duplicate state after {} generations\n", i);
+            break;
+        } else {
+            history.insert(world.get_state().clone());
         }
     }
 
